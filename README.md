@@ -1,10 +1,19 @@
 # GitHub Pull Request Metrics Analyzer
 
-A comprehensive Python tool for analyzing GitHub Pull Request metrics across repositories. This tool provides detailed insights into developer productivity, PR lifecycle metrics, and team performance analytics.
+A comprehensive full-stack application for analyzing GitHub Pull Request metrics across repositories. Includes both a powerful CLI tool and a modern web interface with real-time analysis and interactive visualizations.
 
-## Features
+## 🎯 Features
 
-### Core Analytics
+### **Web Application** 🆕
+- **Modern React Frontend**: Beautiful, responsive web interface with Material-UI
+- **Real-time Progress**: Live updates during analysis via WebSocket
+- **Interactive Charts**: Visualize PR metrics with Chart.js (bar charts, pie charts, trends)
+- **Advanced Data Tables**: Sort, filter, and export data with MUI DataGrid
+- **Dark/Light Theme**: User preference with system detection
+- **FastAPI Backend**: High-performance async API with automatic documentation
+- **Full-Stack Docker**: Complete containerized deployment with docker-compose
+
+### **CLI Tool**
 - **Multi-Repository Analysis**: Analyze single repositories or all repositories for a user/organization
 - **Advanced Metrics**: Time to merge, time to close, code size metrics, merge rates
 - **Date Filtering**: Filter PRs by creation date range (since/until)

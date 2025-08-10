@@ -168,10 +168,32 @@ class GitHubClient:
             List of pull request dictionaries
         """
         endpoint = f"repos/{owner}/{repo}/pulls"
-        params = {'state': state, 'sort': 'created', 'direction': 'desc'}
+        params = {'state': state, 'sort': 'created', 'direction': 'desc', 'per_page': 100}
+        
+        # Add a safety limit for large repositories
+        max_pages = 10  # Limit to 1000 PRs max to prevent hanging
         
         try:
-            pull_requests = self._make_request(endpoint, params)
+            # Use pagination with limits to prevent hanging on massive repos
+            all_prs = []
+            page = 1
+            
+            while page <= max_pages:
+                params['page'] = page
+                page_prs = self._make_request(endpoint, params)
+                
+                if not page_prs:
+                    break
+                    
+                all_prs.extend(page_prs)
+                
+                # If we got less than per_page, we've reached the end
+                if len(page_prs) < 100:
+                    break
+                    
+                page += 1
+            
+            pull_requests = all_prs
             
             # Enhanced date filtering with timezone handling
             if since or until:

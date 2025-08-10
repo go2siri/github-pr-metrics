@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub PR Metrics Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+        }
+        .card-custom {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .card-custom:hover {
+            transform: translateY(-5px);
+        }
+        .progress-container {
+            display: none;
+        }
+        .results-container {
+            display: none;
+        }
+        .metric-card {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        .chart-container {
+            height: 400px;
+            margin: 20px 0;
+        }
+        .loading-spinner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fab fa-github me-2"></i>
+                PR Metrics Analyzer
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#analyze">Analyze</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#results">Results</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section text-center" id="analyze">
+        <div class="container">
+            <h1 class="display-4 mb-4">
+                <i class="fas fa-chart-bar me-3"></i>
+                GitHub PR Metrics Analyzer
+            </h1>
+            <p class="lead mb-5">Analyze GitHub Pull Request metrics with real-time insights and beautiful visualizations</p>
+        </div>
+    </section>
+
+    <!-- Analysis Form -->
+    <section class="py-5" id="form-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card card-custom p-4">
+                        <h3 class="card-title text-center mb-4">
+                            <i class="fas fa-rocket me-2"></i>
+                            Start Your Analysis
+                        </h3>
+                        <form id="analysisForm">
+                            <div class="mb-4">
+                                <label for="githubUrl" class="form-label">
+                                    <i class="fab fa-github me-2"></i>
+                                    GitHub Repository URL
+                                </label>
+                                <input type="url" class="form-control form-control-lg" id="githubUrl" 
+                                       placeholder="https://github.com/microsoft/vscode" required>
+                                <div class="form-text">Enter the full GitHub repository URL</div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="githubToken" class="form-label">
+                                    <i class="fas fa-key me-2"></i>
+                                    GitHub Personal Access Token
+                                </label>
+                                <div class="input-group">
+                                    <input type="password" class="form-control form-control-lg" id="githubToken" 
+                                           placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" required>
+                                    <button class="btn btn-outline-secondary" type="button" id="toggleToken">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    Required for API access. 
+                                    <a href="https://github.com/settings/tokens" target="_blank">Create token here</a>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <label for="sinceDate" class="form-label">
+                                        <i class="fas fa-calendar-alt me-2"></i>
+                                        Since Date (Optional)
+                                    </label>
+                                    <input type="date" class="form-control" id="sinceDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="untilDate" class="form-label">
+                                        <i class="fas fa-calendar-alt me-2"></i>
+                                        Until Date (Optional)
+                                    </label>
+                                    <input type="date" class="form-control" id="untilDate">
+                                </div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">
+                                    <span class="loading-spinner spinner-border spinner-border-sm me-2" role="status"></span>
+                                    <i class="fas fa-play me-2"></i>
+                                    Start Analysis
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Progress Section -->
+    <section class="py-5 bg-light progress-container" id="progress-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card card-custom p-4">
+                        <h4 class="text-center mb-4">
+                            <i class="fas fa-cogs me-2"></i>
+                            Analysis in Progress
+                        </h4>
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                 id="progressBar" role="progressbar" style="width: 0%">0%</div>
+                        </div>
+                        <div class="text-center">
+                            <div id="progressStatus" class="mb-2">Initializing...</div>
+                            <div id="progressDetails" class="text-muted small"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="py-5 results-container" id="results">
+        <div class="container">
+            <!-- Summary Cards -->
+            <div class="row mb-5" id="summaryCards">
+                <!-- Cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Charts Section -->
+            <div class="row">
+                <div class="col-lg-6 mb-4">
+                    <div class="card card-custom p-4">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-bar me-2"></i>
+                            Top Contributors
+                        </h5>
+                        <div class="chart-container">
+                            <canvas id="contributorsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 mb-4">
+                    <div class="card card-custom p-4">
+                        <h5 class="card-title">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            PR Status Distribution
+                        </h5>
+                        <div class="chart-container">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card card-custom p-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-table me-2"></i>
+                                Detailed Results
+                            </h5>
+                            <button class="btn btn-success" id="exportBtn">
+                                <i class="fas fa-download me-2"></i>
+                                Export CSV
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="resultsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Developer</th>
+                                        <th>Total PRs</th>
+                                        <th>Merged</th>
+                                        <th>Open</th>
+                                        <th>Closed</th>
+                                        <th>Merge Rate</th>
+                                        <th>Avg Time to Merge</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultsTableBody">
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back to Top -->
+            <div class="text-center mt-5">
+                <button class="btn btn-outline-primary" onclick="startNewAnalysis()">
+                    <i class="fas fa-plus me-2"></i>
+                    Start New Analysis
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4">
+        <div class="container text-center">
+            <p>&copy; 2024 GitHub PR Metrics Analyzer. Built with ❤️ using FastAPI and Bootstrap</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
